@@ -1,0 +1,44 @@
+image: elixir:1.18
+
+stages:
+  - test
+  - sync
+
+variables:
+  MIX_ENV: test
+
+default:
+  tags:
+    - self-hosted
+
+cache:
+  key:
+    files:
+      - mix.lock
+  paths:
+    - _build/
+    - deps/
+
+before_script:
+  - mix local.hex --force
+  - mix local.rebar --force
+  - mix deps.get
+
+test:
+  stage: test
+  script:
+    - mix test
+
+sync-github:
+  stage: sync
+  image: registry.gitlab.com/eiseron/holter/public-image-bases/alpine-deploy:latest
+  cache: []
+  variables:
+    GIT_DEPTH: "0"
+  before_script: []
+  script:
+    - git remote add github "https://x-access-token:${GITHUB_TOKEN}@github.com/eiseron/core.git"
+    - git push github HEAD:refs/heads/main --tags
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
