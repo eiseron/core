@@ -42,7 +42,7 @@ defmodule EiseronCore.MixProject do
        tag: "v0.1.0", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.12"},
       {:argon2_elixir, "~> 4.0"},
-      {:gettext, "~> 0.26"},
+      {:gettext, "~> 1.0"},
       {:mox, "~> 1.2", only: :test}
     ]
   end
