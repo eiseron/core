@@ -34,4 +34,31 @@ defmodule Eiseron.ErrorMonitoringTest do
 
     assert ErrorMonitoring.before_send(event) == event
   end
+
+  test "config points the client at the Finch-backed implementation" do
+    assert ErrorMonitoring.config()[:client] == ErrorMonitoring.FinchClient
+  end
+
+  test "config keeps PII off by default" do
+    assert ErrorMonitoring.config()[:send_default_pii] == false
+  end
+
+  test "runtime_config carries the given dsn" do
+    assert ErrorMonitoring.runtime_config(dsn: "d")[:dsn] == "d"
+  end
+
+  test "runtime_config stringifies the environment" do
+    assert ErrorMonitoring.runtime_config(environment: :prod)[:environment_name] == "prod"
+  end
+
+  test "config wires the query-scrubbing before_send" do
+    assert ErrorMonitoring.config()[:before_send] == {ErrorMonitoring, :before_send}
+  end
+
+  test "body_scrubber preserves the SDK credit-card masking" do
+    card = "4111111111111111"
+    conn = %Plug.Conn{params: %{"note" => card}, body_params: %{"note" => card}}
+
+    refute ErrorMonitoring.body_scrubber(conn)["note"] == card
+  end
 end

@@ -1,13 +1,45 @@
 defmodule Eiseron.ErrorMonitoring do
   @moduledoc """
-  Shared error-monitoring wiring (Sentry / GlitchTip) for Eiseron products.
+  Single facade for error monitoring across Eiseron products.
 
-  Each app, on boot, calls `attach/0`, points Sentry's `:client` at
-  `Eiseron.ErrorMonitoring.FinchClient`, and wires `body_scrubber/1` into
-  `Sentry.PlugContext`. The DSN, environment and release stay per-app.
+  Everything goes through this module — Sentry is an implementation detail:
+
+      # config/config.exs
+      config :sentry, Eiseron.ErrorMonitoring.config()
+
+      # config/runtime.exs (prod/preview)
+      config :sentry,
+        Eiseron.ErrorMonitoring.runtime_config(
+          dsn: System.get_env("ERROR_MONITORING_DSN"),
+          environment: config_env(),
+          release: to_string(Application.spec(:my_app, :vsn))
+        )
+
+      # application.ex — on boot
+      Eiseron.ErrorMonitoring.attach()
+
+      # endpoint.ex
+      use Eiseron.ErrorMonitoring.PlugCapture
+      plug Eiseron.ErrorMonitoring.PlugContext
   """
 
-  alias Eiseron.ErrorMonitoring.Scrubber
+  alias Eiseron.ErrorMonitoring.{FinchClient, Scrubber}
+
+  def config do
+    [
+      client: FinchClient,
+      before_send: {__MODULE__, :before_send},
+      send_default_pii: false
+    ]
+  end
+
+  def runtime_config(opts) do
+    [
+      dsn: Keyword.get(opts, :dsn),
+      environment_name: to_string(Keyword.get(opts, :environment)),
+      release: Keyword.get(opts, :release)
+    ]
+  end
 
   def attach do
     :logger.add_handler(:eiseron_error_monitoring, Sentry.LoggerHandler, %{
