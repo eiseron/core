@@ -9,8 +9,8 @@ image: elixir:1.18
 
 stages:
   - test
-  - sync
   - release
+  - sync
 
 variables:
   MIX_ENV: test
@@ -46,6 +46,7 @@ sync-github:
   before_script: []
   script:
     - git remote add github "https://x-access-token:${GITHUB_TOKEN}@github.com/eiseron/core.git"
+    - git fetch origin --tags --force
     - git push github HEAD:refs/heads/main --tags
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
