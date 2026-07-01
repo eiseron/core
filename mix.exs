@@ -4,7 +4,7 @@ defmodule EiseronCore.MixProject do
   def project do
     [
       app: :eiseron_core,
-      version: "0.1.0",
+      version: "0.2.0",
       elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -43,6 +43,9 @@ defmodule EiseronCore.MixProject do
       {:ecto, "~> 3.12"},
       {:argon2_elixir, "~> 4.0"},
       {:gettext, "~> 1.0"},
+      {:sentry, "~> 10.8"},
+      {:finch, "~> 0.19"},
+      {:plug, "~> 1.16"},
       {:mox, "~> 1.2", only: :test}
     ]
   end
