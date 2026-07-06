@@ -39,7 +39,7 @@ test:
 
 sync-github:
   stage: sync
-  image: registry.gitlab.com/eiseron/holter/public-image-bases/alpine-deploy:latest
+  image: registry.gitlab.com/eiseron/stack/public-image-bases/alpine-deploy:latest
   cache: []
   variables:
     GIT_DEPTH: "0"
