@@ -1,12 +1,16 @@
 defmodule Eiseron.Observability do
-
-  alias Eiseron.Observability.{LoggerHandler, Traces}
+  alias Eiseron.Observability.{Error, LogBuffer, LoggerHandler, Traces}
 
   @handler_id :eiseron_observability
   @default_buffer Eiseron.Observability.LogBuffer
 
   def setup(opts) do
     attach_when(opts, export?(opts))
+  end
+
+  def report(kind, reason, stacktrace, meta \\ %{}) do
+    kind |> Error.build_record(reason, stacktrace, meta) |> LogBuffer.record()
+    :ok
   end
 
   def detach do
