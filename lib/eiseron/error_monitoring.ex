@@ -41,7 +41,25 @@ defmodule Eiseron.ErrorMonitoring do
     ]
   end
 
-  def attach do
+  def attach(opts \\ []) do
+    opts |> backend() |> attach_backend()
+  end
+
+  defp backend(opts) do
+    Keyword.get(opts, :backend, Application.get_env(:eiseron_core, :error_backend, :glitchtip))
+  end
+
+  defp attach_backend(:otel), do: :ok
+
+  defp attach_backend(:glitchtip), do: install_glitchtip()
+
+  defp attach_backend(other) do
+    require Logger
+    Logger.warning("unknown error_backend #{inspect(other)}, defaulting to :glitchtip")
+    install_glitchtip()
+  end
+
+  defp install_glitchtip do
     :logger.add_handler(:eiseron_error_monitoring, Sentry.LoggerHandler, %{
       config: %{metadata: [:file, :line], capture_log_messages: false}
     })
