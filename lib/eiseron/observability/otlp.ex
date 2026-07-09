@@ -1,4 +1,5 @@
 defmodule Eiseron.Observability.OTLP do
+  alias Eiseron.ErrorMonitoring.Scrubber
 
   @scope "eiseron_core"
 
@@ -19,13 +20,15 @@ defmodule Eiseron.Observability.OTLP do
   end
 
   defp build_log_record(record) do
+    scrubbed = Scrubber.scrub_record(record)
+
     %{
-      "severityNumber" => record.severity_number,
-      "severityText" => record.severity_text,
-      "body" => build_any_value(record.body),
-      "attributes" => build_attributes(record.attributes)
+      "severityNumber" => scrubbed.severity_number,
+      "severityText" => scrubbed.severity_text,
+      "body" => build_any_value(scrubbed.body),
+      "attributes" => build_attributes(scrubbed.attributes)
     }
-    |> put_present("timeUnixNano", format_nano(record[:time_unix_nano]))
+    |> put_present("timeUnixNano", format_nano(scrubbed[:time_unix_nano]))
   end
 
   defp build_attributes(map) when is_map(map) do

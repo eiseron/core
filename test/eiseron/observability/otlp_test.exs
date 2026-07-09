@@ -61,4 +61,28 @@ defmodule Eiseron.Observability.OTLPTest do
              "arrayValue" => %{"values" => [%{"stringValue" => "a"}, %{"intValue" => "1"}]}
            }
   end
+
+  defp leaky_record do
+    %{
+      time_unix_nano: nil,
+      severity_number: 17,
+      severity_text: "ERROR",
+      body: "failed for joao@example.com cpf 123.456.789-00",
+      attributes: %{"exception.message" => "call from (11) 98765-4321", "token" => "s3cr3t"}
+    }
+  end
+
+  test "redacts an email carried in the record body before serializing" do
+    [log_record] =
+      OTLP.build_logs_payload([leaky_record()], @resource)
+      |> get_in(["resourceLogs", Access.at(0), "scopeLogs", Access.at(0), "logRecords"])
+
+    refute log_record["body"]["stringValue"] =~ "joao@example.com"
+  end
+
+  test "leaves no sensitive value anywhere in the encoded payload" do
+    serialized = [leaky_record()] |> OTLP.build_logs_payload(@resource) |> Jason.encode!()
+
+    refute serialized =~ ~r/joao@example\.com|123\.456\.789-00|98765-4321|s3cr3t/
+  end
 end
